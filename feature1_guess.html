@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>功能1 · 输入与判断 | 猜数字小游戏</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #14151a;
+    background-image: radial-gradient(circle at 20% 10%, rgba(108,140,255,.12), transparent 45%),
+                      radial-gradient(circle at 85% 90%, rgba(255,170,80,.08), transparent 40%);
+    color: #e8eaf0; font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    padding: 24px;
+  }
+  .card {
+    width: min(480px, 100%); background: #1c1e26; border: 1px solid #2b2f3c;
+    border-radius: 16px; padding: 32px; box-shadow: 0 20px 50px rgba(0,0,0,.45);
+  }
+  .tag {
+    display: inline-block; font-size: 12px; letter-spacing: .5px; color: #9fb0ff;
+    background: rgba(108,140,255,.12); border: 1px solid rgba(108,140,255,.35);
+    padding: 4px 10px; border-radius: 999px; margin-bottom: 16px;
+  }
+  h1 { font-size: 26px; margin-bottom: 8px; }
+  .desc { font-size: 14px; color: #98a0b3; line-height: 1.7; margin-bottom: 22px; }
+  .row { display: flex; gap: 10px; }
+  input {
+    flex: 1; height: 48px; border-radius: 10px; border: 1px solid #343a4a;
+    background: #12131a; color: #fff; font-size: 18px; padding: 0 14px; outline: none;
+  }
+  input:focus { border-color: #6c8cff; box-shadow: 0 0 0 3px rgba(108,140,255,.18); }
+  button {
+    height: 48px; padding: 0 26px; border: none; border-radius: 10px;
+    background: #6c8cff; color: #fff; font-size: 16px; cursor: pointer; transition: .15s;
+  }
+  button:hover { background: #5a7af0; }
+  button:active { transform: scale(.98); }
+  .feedback { margin-top: 20px; font-size: 17px; font-weight: 600; min-height: 26px; color: #98a0b3; }
+  .feedback.big { color: #ff7b72; }
+  .feedback.small { color: #5aa9ff; }
+  .feedback.ok { color: #4ade80; }
+  .feedback.warn { color: #fbbf24; }
+</style>
+</head>
+<body>
+<main class="card">
+  <p class="tag">功能1 · lyh · 输入与判断</p>
+  <h1>猜数字小游戏</h1>
+  <p class="desc">程序已随机生成一个 1~100 的整数。输入你的猜测，程序会提示「大了 / 小了 / 猜对了」。</p>
+
+  <div class="row">
+    <input id="guessInput" type="number" min="1" max="100" placeholder="输入 1~100 的整数" autofocus>
+    <button id="guessBtn">猜</button>
+  </div>
+
+  <p id="feedback" class="feedback">等待你的第一次猜测…</p>
+</main>
+
+<script>
+  var input = document.getElementById('guessInput');
+  var btn = document.getElementById('guessBtn');
+  var fb = document.getElementById('feedback');
+  var secret = Math.floor(Math.random() * 100) + 1;
+  var over = false;
+
+  function show(type, text) {
+    fb.className = 'feedback ' + type;
+    fb.textContent = text;
+  }
+
+  function guess() {
+    if (over) return;
+    var raw = input.value.trim();
+    var val = Number(raw);
+
+    if (raw === '' || !Number.isInteger(val) || val < 1 || val > 100) {
+      show('warn', '请输入 1~100 之间的整数');
+      return;
+    }
+
+    if (val === secret) {
+      over = true;
+      show('ok', '猜对了！答案就是 ' + secret + '。');
+      input.disabled = true;
+      btn.disabled = true;
+      btn.textContent = '已猜中';
+      return;
+    }
+
+    if (val > secret) {
+      show('big', val + ' 大了，再小一点');
+    } else {
+      show('small', val + ' 小了，再大一点');
+    }
+
+    input.value = '';
+    input.focus();
+  }
+
+  btn.addEventListener('click', guess);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') guess();
+  });
+</script>
+</body>
+</html>
