@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>猜数字</title>
+<style>
+/* SECTION: base */
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --bg: #0f1226;
+  --card: #1a1f3d;
+  --line: #2c335c;
+  --text: #eef1ff;
+  --muted: #a3abd6;
+  --accent: #6c8cff;
+  --good: #3ddc97;
+  --warn: #ffb454;
+}
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 40px);
+  background: radial-gradient(circle at 20% 15%, #232a55 0%, var(--bg) 55%);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+               "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+  line-height: 1.6;
+}
+
+/* SECTION: layout */
+.wrap {
+  width: 100%;
+  max-width: 460px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: clamp(20px, 5vw, 32px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .35);
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: clamp(24px, 6vw, 30px);
+  letter-spacing: 1px;
+}
+
+/* SECTION: range badge */
+.range {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(108, 140, 255, .16);
+  border: 1px solid rgba(108, 140, 255, .45);
+  color: #cdd8ff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hint {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* SECTION: form */
+form {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+input[type="number"] {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 13px 16px;
+  font-size: 16px;
+  color: var(--text);
+  background: #121636;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: none;
+}
+
+input[type="number"]:focus { border-color: var(--accent); }
+
+button {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 13px 20px;
+  min-height: 46px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #0d1130;
+  background: var(--accent);
+  transition: filter .15s ease, transform .05s ease;
+}
+
+button:hover { filter: brightness(1.1); }
+button:active { transform: translateY(1px); }
+
+/* SECTION: restart */
+.btn-restart {
+  width: 100%;
+  margin-top: 12px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.btn-restart:hover { border-color: var(--accent); filter: none; }
+
+/* SECTION: feedback */
+.feedback {
+  margin-top: 20px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #121636;
+  border: 1px solid var(--line);
+  min-height: 56px;
+}
+
+.feedback .msg { margin: 0; font-size: 18px; font-weight: 600; }
+.feedback .count { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+
+.feedback.high .msg { color: var(--warn); }
+.feedback.low .msg { color: var(--accent); }
+.feedback.win { border-color: rgba(61, 220, 151, .5); background: rgba(61, 220, 151, .1); }
+.feedback.win .msg { color: var(--good); }
+.feedback.idle .msg { color: var(--muted); font-weight: 500; font-size: 16px; }
+.feedback.err .msg { color: var(--warn); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <!-- SECTION: header -->
+    <h1>猜数字</h1>
+    <span class="range" id="rangeBadge">范围 1~100</span>
+    <p class="hint">我心里想好了一个数字，输入你的猜测，看看是大了还是小了。</p>
+
+    <!-- SECTION: form -->
+    <form id="guessForm" autocomplete="off">
+      <input type="number" id="guessInput" min="1" max="100" step="1"
+             placeholder="输入 1~100" aria-label="输入你的猜测"
+             inputmode="numeric">
+      <button type="submit" id="submitBtn">猜一下</button>
+    </form>
+
+    <!-- SECTION: restart -->
+    <button type="button" class="btn-restart" id="restartBtn">重新开始</button>
+
+    <!-- SECTION: feedback -->
+    <div class="feedback idle" id="feedback" role="status" aria-live="polite">
+      <p class="msg" id="feedbackMsg">开始猜吧！</p>
+      <p class="count" id="feedbackCount"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* SECTION: state */
+const MIN = 1;
+const MAX = 100;
+
+const rangeBadge = document.getElementById('rangeBadge');
+const form = document.getElementById('guessForm');
+const input = document.getElementById('guessInput');
+const submitBtn = document.getElementById('submitBtn');
+const restartBtn = document.getElementById('restartBtn');
+const feedback = document.getElementById('feedback');
+const feedbackMsg = document.getElementById('feedbackMsg');
+const feedbackCount = document.getElementById('feedbackCount');
+
+let answer = 0;
+let tries = 0;
+let finished = false;
+
+/* SECTION: helpers */
+function newAnswer() {
+  return Math.floor(Math.random() * (MAX - MIN + 1)) + MIN;
+}
+
+function setFeedback(state, message, countText) {
+  feedback.className = 'feedback ' + state;
+  feedbackMsg.textContent = message;
+  feedbackCount.textContent = countText || '';
+}
+
+function resetGame() {
+  answer = newAnswer();
+  tries = 0;
+  finished = false;
+  input.value = '';
+  input.disabled = false;
+  submitBtn.disabled = false;
+  input.focus();
+  setFeedback('idle', '新的一轮开始了，猜猜看！', '');
+}
+
+/* SECTION: guess */
+function handleGuess(event) {
+  event.preventDefault();
+  if (finished) {
+    setFeedback('idle', '这一轮已经结束啦，点「重新开始」再来一局。', '已用次数：' + tries);
+    return;
+  }
+
+  const raw = input.value.trim();
+  if (raw === '') {
+    setFeedback('err', '请输入一个数字。', '已用次数：' + tries);
+    return;
+  }
+
+  const guess = Number(raw);
+  if (!Number.isInteger(guess) || guess < MIN || guess > MAX) {
+    setFeedback('err', '请输入 ' + MIN + '~' + MAX + ' 之间的整数。', '已用次数：' + tries);
+    return;
+  }
+
+  tries += 1;
+
+  if (guess > answer) {
+    setFeedback('high', '大了 ⬆', '已用次数：' + tries);
+  } else if (guess < answer) {
+    setFeedback('low', '小了 ⬇', '已用次数：' + tries);
+  } else {
+    finished = true;
+    input.disabled = true;
+    submitBtn.disabled = true;
+    setFeedback('win', '猜对了！答案是 ' + answer, '已用次数：' + tries + ' 次');
+  }
+
+  input.value = '';
+  if (!finished) input.focus();
+}
+
+/* SECTION: wire up */
+rangeBadge.textContent = '范围 ' + MIN + '~' + MAX;
+form.addEventListener('submit', handleGuess);
+restartBtn.addEventListener('click', resetGame);
+resetGame();
+</script>
+</body>
+</html>
