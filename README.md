@@ -13,13 +13,13 @@
 | 成员 | 角色 | 分支 | 负责文件 |
 |------|------|------|----------|
 | cyc | 组长（建仓库、写说明、合并分支） | main | README.md |
-| lyh | 功能1：输入与判断 | dev-lyh-功能1 | feature1_guess.html |
-| yxr | 功能2：计分与次数 | dev-yxr-功能2 | feature2_score.html |
-| fzy | 功能3：重开与提示 | dev-fzy-功能3 | feature3_restart.html |
+| lyh | 功能1：输入与判断 | dev-lyh-feature1 | feature1_guess.html |
+| yxr | 功能2：计分与次数 | dev-yxr-feature2 | feature2_score.html |
+| fzy | 功能3：重开与提示 | dev-fzy-feature3 | feature3_restart.html |
 
 ## 分支规范
 
-- 分支命名：`dev-姓名-功能`，例如 `dev-lyh-功能1`。
+- 分支命名：`dev-姓名-featureN`（N 为功能序号），例如 `dev-lyh-feature1`。
 - 每个成员从最新的 main 拉取，新建自己的分支，只提交自己的文件，然后 push。
 - 组长依次把各成员分支合并到 main。
 
